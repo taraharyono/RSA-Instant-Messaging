@@ -33,8 +33,7 @@ def ByteIntArrayToBlocks(byteint_array, size):
         return byteint_array
     else:
         blocked_byteintarray = []
-        i = 0
-        while (i < len(byteint_array)):
+        for i in range(0, len(byteint_array), size):
             block = ""
 
             for j in range(size):
@@ -47,31 +46,9 @@ def ByteIntArrayToBlocks(byteint_array, size):
                         block += str(byteint_array[i+j])
                 else:
                     block += str(ord('\0'))
-        
-            i += size
+
             blocked_byteintarray.append(int(block))
         return blocked_byteintarray
-
-
-def CiphertextToBlock(ciphertext, n):
-    ciphertext_string = str(ciphertext)
-    block_size = math.ceil(math.log(n, 16))
-
-    ciphertext_block = []
-
-    i = 0
-    while (i < len(ciphertext_string)):
-        block = ""
-        for j in range(block_size):
-            if ((i+j) < len(ciphertext_string)):
-                block += ciphertext_string[i+j]
-            else:
-                block += "0"
-        
-        i += block_size
-        ciphertext_block.append(int(block, 16))
-    
-    return ciphertext_block
 
 
 def CiphertextBlockSize(n):
@@ -79,7 +56,40 @@ def CiphertextBlockSize(n):
     return (int(size)+1)
 
 
+def CiphertextToBlock(ciphertext, n):
+    ciphertext_string = str(ciphertext)
+    block_size = CiphertextBlockSize(n)
+
+    ciphertext_block = []
+
+    for i in range(0, len(ciphertext_string), block_size):
+        block = ""
+        for j in range(block_size):
+            if ((i+j) < len(ciphertext_string)):
+                block += ciphertext_string[i+j]
+            else:
+                block += "0"
+        
+        ciphertext_block.append(int(block, 16))
+    
+    return ciphertext_block
+
+
+def read_file_bytes(filename):
+    byte_array = []
+    try:
+        with open(filename, 'rb') as file:
+            byte = file.read(1)
+            while byte:
+                byte_array.append(int.from_bytes(byte, byteorder='little'))
+                byte = file.read(1)
+    except FileNotFoundError:
+        print("File not found!")
+    return byte_array
+
+
 def encrypt(plaintext, e, n, block_size, is_file):
+    """File fed should be in the form of array of integer (byte)"""
     if not is_file:
         plaintext_byteintarray = StringToByteIntArray(plaintext)
         plaintext_blocks = ByteIntArrayToBlocks(plaintext_byteintarray, block_size)
@@ -87,7 +97,6 @@ def encrypt(plaintext, e, n, block_size, is_file):
         plaintext_blocks = ByteIntArrayToBlocks(plaintext, block_size)
 
     ciphertext_blocksize = CiphertextBlockSize(n)
-    print(ciphertext_blocksize)
 
     ciphertext_hexstr = ""
 
