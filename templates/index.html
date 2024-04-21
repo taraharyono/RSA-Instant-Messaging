@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Chat Web</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+</head>
+<body style="text-align:center; font-family: Arial, sertif;">
+
+    <div style="width: 50%; float: left; text-align: center;">
+        <h3>Alice</h3>
+        <button id="bangkitAlice">Bangkitkan kunci</button>
+        <button id="kirimAlice">Kirim kunci publik</button>
+    </div>
+
+    <div style="width: 50%; float: right; text-align: center;">
+        <h3>Bob</h3>
+        <button id="bangkitBob">Bangkitkan kunci</button>
+        <button id="kirimBob">Kirim kunci publik</button>
+    </div>
+
+    <div style="width: 50%; float: left; text-align: center;">
+        <div id="messagesLeft" style="margin: 0 auto; width: 80%; text-align: left; min-height: 100px; margin-bottom: 20px"></div>
+        <div id="decryptButtonAlice" style="display: none;">
+            <button id="decryptBtnAlice">Decrypt</button>
+        </div>
+        <div style="position: absolute; bottom: 1; float-center">
+            <input type="text" id="messageLeft" placeholder="Message">
+            <button id="sendBtnLeft">Send</button>
+        </div>
+    </div>
+    
+    <div style="width: 50%; float: right; text-align: center;">
+        <div id="messagesRight" style="margin: 0 auto; width: 80%; text-align: left; min-height: 100px; margin-bottom: 20px"></div>
+        <div id="decryptButtonBob" style="display: none;">
+            <button id="decryptBtnBob">Decrypt</button>
+        </div>
+        <div style="position: absolute; bottom: 1; float: center">
+            <input type="text" id="messageRight" placeholder="Message">
+            <button id="sendBtnRight">Send</button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var socket = io.connect("http://localhost:5000")
+            socket.on('connect', function(){
+                socket.send("User connected!");
+            });
+
+            socket.on('message', function(data) {
+                $('#messagesLeft').append($('<p>').text(data));
+                $('#messagesRight').append($('<p>').text(data));
+
+                if (data.startsWith('Alice')) {
+                    $('#decryptButtonBob').show();
+                } else if (data.startsWith('Bob')) {
+                    $('#decryptButtonAlice').show();
+                }
+            });
+
+            $('#sendBtnLeft').on('click', function(){
+                var message = 'Alice'+ ': ' + $('#messageLeft').val();
+                socket.send(message);
+                $('#messageLeft').val('');
+            })
+
+            $('#sendBtnRight').on('click', function(){
+                var message = 'Bob' + ': ' + $('#messageRight').val();
+                socket.send(message);
+                $('#messageRight').val(''); 
+            })
+
+            $('#bangkitAlice').on('click', function(){
+                var message = "Bangkitkan kunci";
+                socket.emit('bangkitAlice');
+                alert("kunci Alice berhasil dibangkitkan");
+            })
+
+            $('#bangkitBob').on('click', function(){
+                var message = "Bangkitkan kunci";
+                socket.emit('bangkitBob');
+                alert("kunci Bob berhasil dibangkitkan");
+            })
+
+            $('#decryptAlice').on('click', function(){
+                var message = "Bangkitkan kunci";
+                socket.emit('decryptAlice');
+            })
+
+            $('#decryptBob').on('click', function(){
+                var message = "Bangkitkan kunci";
+                socket.emit('decryptBob');
+            })
+        })
+    </script>
+</body>
+</html>
