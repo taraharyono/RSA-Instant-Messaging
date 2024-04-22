@@ -436,8 +436,9 @@ class EncryptionApp:
         file_types = self.save_file_types()
         file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=file_types)
         if file_path:
-            with open(file_path, "w") as file:
-                file.write(self.encrypted_content_alice)
+            with open(file_path, "wb") as file:
+                for byteint in self.encrypted_content_alice:
+                    file.write(byteint.to_bytes(1, byteorder='little'))
             messagebox.showinfo("Success", "Encrypted File downloaded succesfully!")
     
     def save_encrypted_file_bob(self):
@@ -450,8 +451,9 @@ class EncryptionApp:
         print("tes2")
         if file_path:
             print("tes3")
-            with open(file_path, "w") as file:
-                file.write(self.decrypted_content_alice)
+            with open(file_path, "wb") as file:
+                for byteint in self.decrypted_content_alice:
+                    file.write(byteint.to_bytes(1, byteorder='little'))
             messagebox.showinfo("Success", "Decrypted File downloaded succesfully!")
 
     def save_decrypted_file_bob(self):
