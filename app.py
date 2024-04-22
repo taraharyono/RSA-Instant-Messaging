@@ -4,10 +4,6 @@ import base64
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
-## from PIL import Image, ImageTk
-## from cryptography.fernet import Fernet
-from functools import partial
-import pyperclip
 import RSA
 
 from primePy import primes
@@ -25,7 +21,8 @@ class EncryptionApp:
         self.bob_public_key = None
         self.bob_n = None
         self.bob_private_key = None
-        self.isBinary = False
+        self.isBinary_alice = False
+        self.isBinary_bob = False
         self.defaultExtension = None
         
         # Title
@@ -91,8 +88,6 @@ class EncryptionApp:
         self.input_file_button_alice = ttk.Button(master, text="Open File", command=self.open_file_alice)
         # self.upload_button_alice.grid(row=6, column=1, padx=self.padding, pady=self.padding, sticky="w")
         
-        # self.file_label_alice = ttk.Label(master, text="")
-        # self.file_label_alice.grid(row=6, column=1, padx=5, pady=5, sticky="w")
         
         self.input_text_alice = tk.Text(master, height=5, width=40)
         self.input_text_alice.grid(row=7, column=0, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
@@ -104,7 +99,7 @@ class EncryptionApp:
         self.input_type_label_bob.grid(row=5, column=2, padx=5, pady=5, sticky="w")
         
         self.input_type_menu_bob = ttk.OptionMenu(master, self.input_type_var_bob, "Text", "Text", "File", command=self.toggle_input_bob)
-        self.input_type_menu_bob.grid(row=5, column=4, padx=5, pady=5)
+        self.input_type_menu_bob.grid(row=5, column=3, padx=5, pady=5)
         
         self.message_label_bob = ttk.Label(master, text="Input Message (Bob):")
         self.message_label_bob.grid(row=6, column=2, padx=self.padding, pady=self.padding, sticky="w")
@@ -112,8 +107,11 @@ class EncryptionApp:
         self.input_file_button_bob = ttk.Button(master, text="Open File", command=self.open_file_bob)
         # self.upload_button_bob.grid(row=6, column=3, padx=self.padding, pady=self.padding, sticky="w")
         
+        self.file_label_alice = ttk.Label(master, text="")
+        self.file_label_alice.grid(row=6, column=1, padx=5, pady=5, sticky="w")
+        
         self.file_label_bob = ttk.Label(master, text="")
-        self.file_label_bob.grid(row=7, column=3, padx=5, pady=5, sticky="w")
+        self.file_label_bob.grid(row=6, column=3, padx=5, pady=5, sticky="w")
         
         self.input_text_bob = tk.Text(master, height=5, width=40)
         self.input_text_bob.grid(row=7, column=2, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
@@ -241,12 +239,14 @@ class EncryptionApp:
     def toggle_input_alice(self, *args):
         input_type = self.input_type_var_alice.get()
         if input_type == "Text":
+            self.isBinary_alice = False
             self.input_text_alice.grid(row=7, column=0, padx=5, pady=5, columnspan=2)
             self.input_file_button_alice.grid_remove()
-            # self.file_label.grid_remove()
+            self.file_label_alice.grid_remove()
             self.input_text_alice.delete("1.0", tk.END)
-            # self.file_content_label.grid_remove()
+            self.file_label_alice.grid_remove()
         elif input_type == "File":
+            self.isBinary = True
             self.input_text_alice.grid_remove()
             # self.input_label.grid_remove()
             self.input_file_button_alice.grid(row=7, column=0, padx=5, pady=5, columnspan=2)
@@ -254,26 +254,24 @@ class EncryptionApp:
     def toggle_input_bob(self, *args):
         input_type = self.input_type_var_bob.get()
         if input_type == "Text":
-            self.isBinary = False
+            self.isBinary_bob = False
             self.input_text_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
             self.input_file_button_bob.grid_remove()
             self.file_label_bob.grid_remove()
             self.input_text_bob.delete("1.0", tk.END)
             self.file_label_bob.grid_remove()
         elif input_type == "File":
-            self.isBinary = True
+            self.isBinary_bob = True
             self.input_text_bob.grid_remove()
             # self.file_label_bob.grid_remove()
             self.input_file_button_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
 
     def open_file_alice(self):
-        if file_path[-4:] != ".txt":
-            self.isBinary = True
-            self.defaultExtension = file_path[-4:]
+        self.isBinary_alice = True
         file_path = filedialog.askopenfilename()
         file_byteintarray = RSA.read_file_bytes(file_path)
-        self.content = file_byteintarray
-        self.file_label.config(text="File: " + file_path)
+        self.content_alice = file_byteintarray
+        self.file_label_alice.config(text="File: " + file_path)
         
         # if file_path[-4:] != ".txt":
         #     self.isBinary = True
@@ -297,14 +295,14 @@ class EncryptionApp:
             # self.file_label.config(text="File: " + file_path)
 
     def open_file_bob(self):
-        self.isBinary = True
+        self.isBinary_bob = True
         file_path = filedialog.askopenfilename()
         file_byteintarray = RSA.read_file_bytes(file_path)
-        self.content = file_byteintarray
+        self.content_bob = file_byteintarray
         self.file_label_bob.config(text="File: " + file_path)
 
     def send_message_alice(self):
-        if not self.isBinary:
+        if not self.isBinary_alice:
             input_text_alice = self.input_text_alice.get("1.0", "end-1c")
             is_file = False
         else:
@@ -317,18 +315,23 @@ class EncryptionApp:
             messagebox.showerror("Error", "Bob has not sent public key yet!")
             return
 
-        if not self.isBinary:
+        if not self.isBinary_alice:
             self.encrypted_text_alice = RSA.encrypt(input_text_alice, bob_public_key, bob_n, block_size, is_file)
             
             print(self.encrypted_text_alice)
+            self.chatbox_text_bob.grid(row=10, column=2, padx=5, pady=5, columnspan=2)
+            self.save_encrypted_file_button_bob.grid_remove()
             self.chatbox_text_bob.delete("1.0", tk.END)
             self.chatbox_text_bob.insert(tk.END, base64.b64encode(self.encrypted_text_alice.encode()).decode())
         else:
-            encrypted_file = RSA.encrypt(self.content, bob_public_key, bob_n, block_size, is_file)
-            encrypted_file_byteintarray = RSA.HexStringToByteIntArray(encrypted_file)
+            self.chatbox_text_bob.grid_remove()
+            self.save_encrypted_file_button_bob.grid(row=10, column=2, padx=5, pady=5, columnspan=2)
+
+            encrypted_file = RSA.encrypt(self.content_alice, bob_public_key, bob_n, block_size, is_file)
+            self.encrypted_content_bob = RSA.HexStringToByteIntArray(encrypted_file)
     
     def send_message_bob(self):
-        if not self.isBinary:
+        if not self.isBinary_bob:
             input_text_bob = self.input_text_bob.get("1.0", "end-1c")
             is_file = False
         else:
@@ -342,7 +345,7 @@ class EncryptionApp:
             messagebox.showerror("Error", "Alice has not sent public key yet!")
             return
 
-        if not self.isBinary:
+        if not self.isBinary_bob:
             self.encrypted_text_bob = RSA.encrypt(input_text_bob, alice_public_key, alice_n, block_size, is_file)
             print("tes")
             print(self.encrypted_text_bob)
@@ -355,13 +358,16 @@ class EncryptionApp:
             self.chatbox_text_alice.grid_remove()
             self.save_encrypted_file_button_alice.grid(row=10, column=0, padx=5, pady=5, columnspan=2)
             
-            encrypted_file = RSA.encrypt(self.content, alice_public_key, alice_n, block_size, is_file)
+            encrypted_file = RSA.encrypt(self.content_bob, alice_public_key, alice_n, block_size, is_file)
             self.encrypted_content_alice = RSA.HexStringToByteIntArray(encrypted_file)
          
     def decrypt_message_alice(self):
-        if not self.isBinary:
+        print("isBinaryBob: " + str(self.isBinary_bob))
+        if not self.isBinary_bob:
             decrypted_message = RSA.decrypt(self.encrypted_text_bob, self.alice_private_key, self.alice_n)
             print(decrypted_message)
+            self.save_decrypted_file_button_alice.grid_remove()
+            self.decrypted_chatbox_alice.grid(row=12, column=0, padx=5, pady=5, columnspan=2)
             self.decrypted_chatbox_alice.delete("1.0", tk.END)
             self.decrypted_chatbox_alice.insert(tk.END, bytes(decrypted_message))
         else:
@@ -371,18 +377,41 @@ class EncryptionApp:
             self.decrypted_content_alice = RSA.decrypt(decrypted_file_hex, self.alice_private_key, self.alice_n)
 
     def decrypt_message_bob(self):
-        if not self.isBinary:
+        if not self.isBinary_alice:
             decrypted_message = RSA.decrypt(self.encrypted_text_alice, self.bob_private_key, self.bob_n)
+            self.save_decrypted_file_button_bob.grid_remove()
+            self.decrypted_chatbox_bob.grid(row=12, column=2, padx=5, pady=5, columnspan=2)
             self.decrypted_chatbox_bob.delete("1.0", tk.END)
             self.decrypted_chatbox_bob.insert(tk.END, bytes(decrypted_message))
         else:
-            decrypted_file_hex = RSA.ByteIntArrayToHexString(self.content)
-            decrypted_file = RSA.decrypt(decrypted_file_hex, self.bob_private_key, self.bob_n)
+            self.decrypted_chatbox_bob.grid_remove()
+            self.save_decrypted_file_button_bob.grid(row=12, column=2, padx=5, pady=5, columnspan=2)
+            decrypted_file_hex = RSA.ByteIntArrayToHexString(self.encrypted_content_bob)
+            self.decrypted_content_bob = RSA.decrypt(decrypted_file_hex, self.bob_private_key, self.bob_n)
    
-    def save_file_types(self):
+    def save_file_types_alice(self):
         filetypes = []
         print("coba")
-        if not self.isBinary:
+        if not self.isBinary_bob:
+            filetypes.append(("Text files", "*.txt"))
+        elif self.defaultExtension == ".png":
+            filetypes.append(("PNG", "*.png"))
+        elif self.defaultExtension == ".pdf":
+            filetypes.append(("PDF", "*.pdf"))
+        elif self.defaultExtension == ".csv":
+            filetypes.append(("CSV", "*.csv"))
+        elif self.defaultExtension == ".gif":
+            filetypes.append(("GIF", "*.gif"))
+        elif self.defaultExtension == ".mp4":
+            filetypes.append(("MP4", "*.mp4"))
+        else:
+            filetypes.append(("All files", "*.*"))
+        return filetypes
+    
+    def save_file_types_bob(self):
+        filetypes = []
+        print("coba")
+        if not self.isBinary_alice:
             filetypes.append(("Text files", "*.txt"))
         elif self.defaultExtension == ".png":
             filetypes.append(("PNG", "*.png"))
@@ -403,7 +432,7 @@ class EncryptionApp:
         if not output_text and not self.isBinary:
             messagebox.showerror("Error", "No output to save.")
             return
-        file_types = self.save_file_types()
+        file_types = self.save_file_types_bob()
         file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=file_types)
         if file_path:
             if not self.isBinary:  # If the data is text
@@ -418,7 +447,7 @@ class EncryptionApp:
             self.file_label.grid_remove()
 
     def save_encrypted_file_alice(self):
-        file_types = self.save_file_types()
+        file_types = self.save_file_types_alice()
         file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=file_types)
         if file_path:
             with open(file_path, "wb") as file:
@@ -427,11 +456,17 @@ class EncryptionApp:
             messagebox.showinfo("Success", "Encrypted File downloaded succesfully!")
     
     def save_encrypted_file_bob(self):
-        pass
+        file_types = self.save_file_types_bob()
+        file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=file_types)
+        if file_path:
+            with open(file_path, "wb") as file:
+                for byteint in self.encrypted_content_alice:
+                    file.write(byteint.to_bytes(1, byteorder='little'))
+            messagebox.showinfo("Success", "Encrypted File downloaded succesfully!")
     
     def save_decrypted_file_alice(self):
         print("tes1")
-        file_types = self.save_file_types()
+        file_types = self.save_file_types_alice()
         file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=file_types)
         print("tes2")
         if file_path:
@@ -442,7 +477,16 @@ class EncryptionApp:
             messagebox.showinfo("Success", "Decrypted File downloaded succesfully!")
 
     def save_decrypted_file_bob(self):
-        pass
+        print("tes1")
+        file_types = self.save_file_types_bob()
+        file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=file_types)
+        print("tes2")
+        if file_path:
+            print("tes3")
+            with open(file_path, "wb") as file:
+                for byteint in self.decrypted_content_bob:
+                    file.write(byteint.to_bytes(1, byteorder='little'))
+            messagebox.showinfo("Success", "Decrypted File downloaded succesfully!")
 
     
     def save_output_alice(self):
