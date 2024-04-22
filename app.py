@@ -290,8 +290,6 @@ class EncryptionApp:
             #     self.input_text.insert("1.0", content)
 
             #     self.content = content
-
-            
             # # Update file label to display the filename
             # self.file_label.config(text="File: " + file_path)
 
