@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, send, emit
 import RSA
+import base64
 
 app = Flask(__name__)
 app.config['SECRET'] = "secret!123"
@@ -11,6 +12,12 @@ def handle_message(message):
     print("Received message: " + message)
     if message != "User connected!":
         emit('message', message, broadcast=True)
+
+@socketio.on('file')
+def handle_file(data):
+    print("File received")
+    emit('message', data['message'], broadcast=True)
+    emit('file', data['data'], broadcast=True)
 
 @socketio.on('bangkitAlice')
 def generate_key_Alice():
