@@ -254,12 +254,14 @@ class EncryptionApp:
     def toggle_input_bob(self, *args):
         input_type = self.input_type_var_bob.get()
         if input_type == "Text":
+            self.isBinary = False
             self.input_text_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
             self.input_file_button_bob.grid_remove()
             self.file_label_bob.grid_remove()
             self.input_text_bob.delete("1.0", tk.END)
             self.file_label_bob.grid_remove()
         elif input_type == "File":
+            self.isBinary = True
             self.input_text_bob.grid_remove()
             # self.file_label_bob.grid_remove()
             self.input_file_button_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
@@ -300,27 +302,6 @@ class EncryptionApp:
         file_byteintarray = RSA.read_file_bytes(file_path)
         self.content = file_byteintarray
         self.file_label_bob.config(text="File: " + file_path)
-        # if file_path[-4:] != ".txt":
-        #     self.isBinary = True
-        #     self.defaultExtension = file_path[-4:]
-        # if file_path and not self.isBinary:
-        #     with open(file_path, "r") as file:
-        #         content = file.read()
-        #         self.input_text.delete("1.0", tk.END)
-        #         self.input_text.insert("1.0", content)
-        #         ## print("base64" + base64_content)
-        # elif self.isBinary:
-        #     with open(file_path, "rb") as file:
-        #         content = file.read()
-        #         ## base64_content = base64.b64encode(content).decode('utf-8')
-        #         self.input_text.delete("1.0", tk.END)
-        #         self.input_text.insert("1.0", content)
-
-        #         self.content = content
-
-            
-        #     # Update file label to display the filename
-        #     self.file_label.config(text="File: " + file_path)
 
     def send_message_alice(self):
         if not self.isBinary:
@@ -356,17 +337,21 @@ class EncryptionApp:
         alice_n = self.alice_n
         block_size = 1
         
+        print("iasdas")
         if self.alice_public_key == None:
             messagebox.showerror("Error", "Alice has not sent public key yet!")
             return
 
         if not self.isBinary:
             self.encrypted_text_bob = RSA.encrypt(input_text_bob, alice_public_key, alice_n, block_size, is_file)
-            
+            print("tes")
             print(self.encrypted_text_bob)
+            self.chatbox_text_alice.grid(row=10, column=0, padx=5, pady=5, columnspan=2)
+            self.save_encrypted_file_button_alice.grid_remove()
             self.chatbox_text_alice.delete("1.0", tk.END)
             self.chatbox_text_alice.insert(tk.END, base64.b64encode(self.encrypted_text_bob.encode()).decode())
         else:
+            print("masuk lagi ga")
             self.chatbox_text_alice.grid_remove()
             self.save_encrypted_file_button_alice.grid(row=10, column=0, padx=5, pady=5, columnspan=2)
             
