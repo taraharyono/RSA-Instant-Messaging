@@ -103,38 +103,38 @@ class EncryptionApp:
         self.input_text_bob.grid(row=7, column=2, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
         
         # Send Button
-        self.send_button_alice = ttk.Button(master, text="Send", command=partial(self.send_message, sender="Alice"))
+        self.send_button_alice = ttk.Button(master, text="Send", command=self.send_message_alice)
         self.send_button_alice.grid(row=8, column=0, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.send_button_bob = ttk.Button(master, text="Send", command=partial(self.send_message, sender="Bob"))
+        self.send_button_bob = ttk.Button(master, text="Send", command=self.send_message_bob)
         self.send_button_bob.grid(row=8, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")        
         
         # Chatbox
-        self.chatbox_label_alice = ttk.Label(master, text="Chat from Bob:")
+        self.chatbox_label_alice = ttk.Label(master, text="Chat Inbox from Bob:")
         self.chatbox_label_alice.grid(row=9, column=0, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.chatbox_text_alice = tk.Text(master, height=5, width=60)
+        self.chatbox_text_alice = tk.Text(master, height=8, width=60)
         self.chatbox_text_alice.grid(row=10, column=0, columnspan=3, padx=self.padding, pady=self.padding)
 
-        self.chatbox_label_bob = ttk.Label(master, text="Chat from Alice:")
+        self.chatbox_label_bob = ttk.Label(master, text="Chat Inbox from Alice:")
         self.chatbox_label_bob.grid(row=9, column=2, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.chatbox_text_bob = tk.Text(master, height=5, width=60)
+        self.chatbox_text_bob = tk.Text(master, height=8, width=60)
         self.chatbox_text_bob.grid(row=10, column=2, columnspan=3, padx=self.padding, pady=self.padding)
 
         # Decrypt Button
-        self.decrypt_button_alice = ttk.Button(master, text="decrypt", command=partial(self.decrypt_message, sender="Alice"))
+        self.decrypt_button_alice = ttk.Button(master, text="decrypt", command=self.decrypt_message_alice)
         self.decrypt_button_alice.grid(row=11, column=0, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.decrypt_button_bob = ttk.Button(master, text="decrypt", command=partial(self.decrypt_message, sender="Bob"))
+        self.decrypt_button_bob = ttk.Button(master, text="decrypt", command=self.decrypt_message_bob)
         self.decrypt_button_bob.grid(row=11, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
         
         # Decrypted Result
-        self.decrypted_text_alice = tk.Text(master, height=5, width=60)
-        self.decrypted_text_alice.grid(row=12, column=0, columnspan=3, padx=self.padding, pady=self.padding)
+        self.decrypted_chatbox_alice = tk.Text(master, height=5, width=60)
+        self.decrypted_chatbox_alice.grid(row=12, column=0, columnspan=3, padx=self.padding, pady=self.padding)
 
-        self.decrypted_text_alice = tk.Text(master, height=5, width=60)
-        self.decrypted_text_alice.grid(row=12, column=2, columnspan=3, padx=self.padding, pady=self.padding)        
+        self.decrypted_chatbox_bob = tk.Text(master, height=5, width=60)
+        self.decrypted_chatbox_bob.grid(row=12, column=2, columnspan=3, padx=self.padding, pady=self.padding)        
 
         # Save Button
         self.save_button_alice = ttk.Button(master, text="save", command=partial(self.save_output, sender="Alice"))
@@ -143,20 +143,30 @@ class EncryptionApp:
         self.save_button_bob = ttk.Button(master, text="save", command=partial(self.save_output, sender="Bob"))
         self.save_button_bob.grid(row=13, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
         
+        self.alice_public_key = None
+        self.alice_n = None
+        self.alice_private_key = None
+        
+        self.bob_public_key = None
+        self.bob_n = None
+        self.bob_private_key = None
+        
     def generate_key_alice(self):
         p = int(self.input_p_entry_alice.get())
         q = int(self.input_q_entry_alice.get())
+        print(p)
+        print(q)
+        print("tes")
         if primes.check(p) and primes.check(q):
             self.alice_public_key, self.alice_private_key, self.alice_n = RSA.generateKey(p, q)
+            print("tes")
             with open("alice.pub", "w") as file:
                 file.write(f"{self.alice_public_key} {self.alice_n}")
             with open("alice.pri", "w") as file:
                 file.write(f"{self.alice_private_key} {self.alice_n}")
             messagebox.showinfo("Success", "Keys generated and saved successfully.")
-
-    def send_public_key_alice(self):
-        # Add logic to send public key from Alice
-        pass
+        else:
+            messagebox.showinfo("Failed", "Keys failed to generate")
 
     def generate_key_bob(self):
         p = int(self.input_p_entry_bob.get())
@@ -167,15 +177,49 @@ class EncryptionApp:
                 file.write(f"{self.bob_public_key} {self.bob_n}")
             with open("bob.pri", "w") as file:
                 file.write(f"{self.bob_private_key} {self.bob_n}")
-            messagebox.showinfo("Success", "Keys generated and saved successfully.")
-        pass
+            messagebox.showinfo("Success", "Bob key generated and saved successfully.")
+            
+    def send_public_key_alice(self):
+        try:
+            # Read Public Key
+            with open("alice.pub", "r") as file:
+                file_content = file.read().strip().split()
+                if len(file_content) != 2:
+                    messagebox.showerror("Error", "Cek lagi file!")
+                self.alice_public_key, self.alice_n = int(file_content[0]), int(file_content[1])
+            
+            # Read Private Key
+            with open("alice.pri", "r") as file:
+                file_content = file.read().strip().split()
+                if len(file_content) != 2:
+                    messagebox.showerror("Error", "Cek lagi file!")
+                self.alice_private_key, self.alice_n = int(file_content[0]), int(file_content[1])
+                
+            messagebox.showinfo("Success", "Public key successfully sent!")
+            
+        except FileNotFoundError:
+            messagebox.showerror("Error", "alice.pub not found!")
     
-    def decrypt_message(self):
-        
-        pass
-
     def send_public_key_bob(self):
-        # Add logic to send public key from Bob
+        try:
+            # Read Public Key
+            with open("bob.pub", "r") as file:
+                file_content = file.read().strip().split()
+                if len(file_content) != 2:
+                    messagebox.showerror("Error", "Cek lagi file!")
+                self.bob_public_key, self.bob_n = int(file_content[0]), int(file_content[1])
+            
+            # Read Private Key
+            with open("bob.pri", "r") as file:
+                file_content = file.read().strip().split()
+                if len(file_content) != 2:
+                    messagebox.showerror("Error", "Cek lagi file!")
+                self.bob_private_key, self.bob_n = int(file_content[0]), int(file_content[1])
+                
+            messagebox.showinfo("Success", "Public key successfully sent!")
+            
+        except FileNotFoundError:
+            messagebox.showerror("Error", "alice.pub not found!")
         pass
 
     def toggle_input_alice(self, *args):
@@ -252,10 +296,74 @@ class EncryptionApp:
             # Update file label to display the filename
             self.file_label.config(text="File: " + file_path)
 
-    def send_message(self):
+    def send_message_alice(self):
+        input_text_alice = self.input_text_alice.get("1.0", "end-1c")
+        bob_public_key = self.bob_public_key
+        bob_n = self.bob_n
+        block_size = 1
+        is_file = False
         
-        pass 
+        if self.bob_public_key == None:
+            messagebox.showerror("Error", "Bob has not sent public key yet!")
+            return
+
+        self.encrypted_text_alice = RSA.encrypt(input_text_alice, bob_public_key, bob_n, block_size, is_file)
+        
+        print(self.encrypted_text_alice)
+        self.chatbox_text_bob.delete("1.0", tk.END)
+        self.chatbox_text_bob.insert(tk.END, base64.b64encode(self.encrypted_text_alice.encode()).decode())
+        # if not self.isBinary:
+        #     self.output_text.delete("1.0", tk.END)
+        #     self.output_text.insert(tk.END, encrypted_text)
+        #     base64_cipher = base64.b64encode(encrypted_text.encode()).decode()
+        #     print(base64_cipher)
+              
+        #     # Delete previous content and insert new content
+        #     self.base64_output_text.delete("1.0", tk.END)
+        #     self.base64_output_text.insert(tk.END, base64_cipher)      
+        # else:
+        #     self.base64_output_text.delete("1.0", tk.END)
     
+    def send_message_bob(self):
+        input_text_bob = self.input_text_bob.get("1.0", "end-1c")
+        alice_public_key = self.alice_public_key
+        alice_n = self.alice_n
+        block_size = 1
+        is_file = False
+        
+        if self.alice_public_key == None:
+            messagebox.showerror("Error", "Alice has not sent public key yet!")
+            return
+
+        self.encrypted_text_bob = RSA.encrypt(input_text_bob, alice_public_key, alice_n, block_size, is_file)
+        
+        print(self.encrypted_text_bob)
+        self.chatbox_text_alice.delete("1.0", tk.END)
+        self.chatbox_text_alice.insert(tk.END, base64.b64encode(self.encrypted_text_bob.encode()).decode())
+        # if not self.isBinary:
+        #     self.output_text.delete("1.0", tk.END)
+        #     self.output_text.insert(tk.END, encrypted_text)
+        #     base64_cipher = base64.b64encode(encrypted_text.encode()).decode()
+        #     print(base64_cipher)
+              
+        #     # Delete previous content and insert new content
+        #     self.base64_output_text.delete("1.0", tk.END)
+        #     self.base64_output_text.insert(tk.END, base64_cipher)      
+        # else:
+        #     self.base64_output_text.delete("1.0", tk.END)
+         
+    def decrypt_message_alice(self):
+        decrypted_message = RSA.decrypt(self.encrypted_text_bob, self.alice_private_key, self.alice_n)
+        print(decrypted_message)
+        self.decrypted_chatbox_alice.delete("1.0", tk.END)
+        self.decrypted_chatbox_alice.insert(tk.END, decrypted_message)
+        
+
+    def decrypt_message_bob(self):
+        decrypted_message = RSA.decrypt(self.encrypted_text_alice, self.bob_private_key, self.bob_n)
+        self.decrypted_chatbox_bob.delete("1.0", tk.END)
+        self.decrypted_chatbox_bob.insert(tk.END, decrypted_message)
+   
     def save_file_types(self):
         filetypes = []
         print("coba")
@@ -294,21 +402,7 @@ class EncryptionApp:
         else:
             self.file_label.grid_remove()
 
-                
-    def process(self):
-        input_text = self.input_text.get("1.0", "end-1c")
-        choice = self.choice_var.get()
-        technique = self.technique_var.get()
-        key = self.key_entry.get()
-
-        if not input_text and not self.content:
-            messagebox.showerror("Error", "Please enter some text.")
-            return
-
-        if not key:
-            messagebox.showerror("Error", "Please enter a key.")
-            return
-
+        
         
 def main():
     root = tk.Tk()
