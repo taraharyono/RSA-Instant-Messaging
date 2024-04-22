@@ -6,6 +6,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 ## from PIL import Image, ImageTk
 ## from cryptography.fernet import Fernet
+from functools import partial
 import pyperclip
 import RSA
 
@@ -17,98 +18,131 @@ class EncryptionApp:
         self.master.title("Chat App")
         self.padding = 2
         
-        # Alice Section
+        # Title
         self.alice_label = ttk.Label(master, text="ALICE", font=("Helvetica", 16, "bold"))
         self.alice_label.grid(row=0, column=0, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
 
+        self.bob_label = ttk.Label(master, text="Bob", font=("Helvetica", 16, "bold"))
+        self.bob_label.grid(row=0, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
+        
+        # Input P
         self.input_p_label_alice = ttk.Label(master, text="Input P:")
         self.input_p_label_alice.grid(row=1, column=0, padx=self.padding, pady=self.padding, sticky="w")
         
         self.input_p_entry_alice = ttk.Entry(master)
         self.input_p_entry_alice.grid(row=1, column=1, padx=self.padding, pady=self.padding, sticky="w")
         
-        self.input_q_label_alice = ttk.Label(master, text="Input Q:")
-        self.input_q_label_alice.grid(row=2, column=0, padx=self.padding, pady=self.padding, sticky="w")
-        
-        self.input_q_entry_alice = ttk.Entry(master)
-        self.input_q_entry_alice.grid(row=2, column=1, padx=self.padding, pady=self.padding, sticky="w")
-
-        self.generate_key_button_alice = ttk.Button(master, text="Generate Key", command=self.generate_key_alice)
-        self.generate_key_button_alice.grid(row=3, column=0, padx=self.padding, pady=self.padding, sticky="w")
-
-        self.send_public_key_button_alice = ttk.Button(master, text="Send Public Key", command=self.send_public_key_alice)
-        self.send_public_key_button_alice.grid(row=4, column=0, padx=self.padding, pady=self.padding, sticky="w")
-
-        # Bob Section
-        self.bob_label = ttk.Label(master, text="Bob", font=("Helvetica", 16, "bold"))
-        self.bob_label.grid(row=0, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
-
         self.input_p_label_bob = ttk.Label(master, text="Input P:")
         self.input_p_label_bob.grid(row=1, column=2, padx=self.padding, pady=self.padding, sticky="w")
         
         self.input_p_entry_bob = ttk.Entry(master)
         self.input_p_entry_bob.grid(row=1, column=3, padx=self.padding, pady=self.padding, sticky="w")
         
+        # Input Q
+        self.input_q_label_alice = ttk.Label(master, text="Input Q:")
+        self.input_q_label_alice.grid(row=2, column=0, padx=self.padding, pady=self.padding, sticky="w")
+        
+        self.input_q_entry_alice = ttk.Entry(master)
+        self.input_q_entry_alice.grid(row=2, column=1, padx=self.padding, pady=self.padding, sticky="w")
+
         self.input_q_label_bob = ttk.Label(master, text="Input Q:")
         self.input_q_label_bob.grid(row=2, column=2, padx=self.padding, pady=self.padding, sticky="w")
         
         self.input_q_entry_bob = ttk.Entry(master)
         self.input_q_entry_bob.grid(row=2, column=3, padx=self.padding, pady=self.padding, sticky="w")
+        
+        # Generate Key
+        self.generate_key_button_alice = ttk.Button(master, text="Generate Key", command=self.generate_key_alice)
+        self.generate_key_button_alice.grid(row=3, column=0, padx=self.padding, pady=self.padding, sticky="w")
 
         self.generate_key_button_bob = ttk.Button(master, text="Generate Key", command=self.generate_key_bob)
         self.generate_key_button_bob.grid(row=3, column=2, padx=self.padding, pady=self.padding, sticky="w")
-
+        
+        # Send Public Key
+        self.send_public_key_button_alice = ttk.Button(master, text="Send Public Key", command=self.send_public_key_alice)
+        self.send_public_key_button_alice.grid(row=4, column=0, padx=self.padding, pady=self.padding, sticky="w")
+        
         self.send_public_key_button_bob = ttk.Button(master, text="Send Public Key", command=self.send_public_key_bob)
         self.send_public_key_button_bob.grid(row=4, column=2, padx=self.padding, pady=self.padding, sticky="w")
-
-        # Alice Input Section
-        self.select_input_label_alice = ttk.Label(master, text="Select Input Type (Alice):")
-        self.select_input_label_alice.grid(row=5, column=0, padx=self.padding, pady=self.padding, sticky="w")
-
+        
+        # Input Message
         self.input_type_var_alice = tk.StringVar()
         self.input_type_var_alice.set("Text")
-        self.input_type_menu_alice = ttk.OptionMenu(master, self.input_type_var_alice, "Text", "Text", "File", command=self.toggle_input_alice)
-        self.input_type_menu_alice.grid(row=5, column=1, padx=self.padding, pady=self.padding, sticky="w")
+        
+        self.input_type_label_alice = ttk.Label(master, text="Select Input Type:")
+        self.input_type_label_alice.grid(row=5, column=0, padx=5, pady=5, sticky="w")
 
+        self.input_type_menu_alice = ttk.OptionMenu(master, self.input_type_var_alice, "Text", "Text", "File", command=self.toggle_input_alice)
+        self.input_type_menu_alice.grid(row=5, column=1, padx=5, pady=5)
+        
         self.message_label_alice = ttk.Label(master, text="Input Message (Alice):")
         self.message_label_alice.grid(row=6, column=0, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.upload_button_alice = ttk.Button(master, text="Upload File", command=self.upload_file_alice)
-        self.upload_button_alice.grid(row=6, column=1, padx=self.padding, pady=self.padding, sticky="w")
+        self.input_file_button_alice = ttk.Button(master, text="Open File", command=self.open_file_alice)
+        # self.upload_button_alice.grid(row=6, column=1, padx=self.padding, pady=self.padding, sticky="w")
 
         self.input_text_alice = tk.Text(master, height=5, width=40)
         self.input_text_alice.grid(row=7, column=0, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
 
-        self.chatbox_label_alice = ttk.Label(master, text="Chatbox (Alice Sent and Bob Received Messages):")
-        self.chatbox_label_alice.grid(row=8, column=0, padx=self.padding, pady=self.padding, sticky="w")
-
-        self.chatbox_text_alice = tk.Text(master, height=10, width=60)
-        self.chatbox_text_alice.grid(row=9, column=0, columnspan=3, padx=self.padding, pady=self.padding)
-
-        # Bob Input Section
-        self.select_input_label_bob = ttk.Label(master, text="Select Input Type (Bob):")
-        self.select_input_label_bob.grid(row=5, column=2, padx=self.padding, pady=self.padding, sticky="w")
-
         self.input_type_var_bob = tk.StringVar()
         self.input_type_var_bob.set("Text")
+        
+        self.input_type_label_bob = ttk.Label(master, text="Select Input Type:")
+        self.input_type_label_bob.grid(row=5, column=2, padx=5, pady=5, sticky="w")
+        
         self.input_type_menu_bob = ttk.OptionMenu(master, self.input_type_var_bob, "Text", "Text", "File", command=self.toggle_input_bob)
-        self.input_type_menu_bob.grid(row=5, column=3, padx=self.padding, pady=self.padding, sticky="w")
-
+        self.input_type_menu_bob.grid(row=5, column=4, padx=5, pady=5)
+        
         self.message_label_bob = ttk.Label(master, text="Input Message (Bob):")
         self.message_label_bob.grid(row=6, column=2, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.upload_button_bob = ttk.Button(master, text="Upload File", command=self.upload_file_bob)
-        self.upload_button_bob.grid(row=6, column=3, padx=self.padding, pady=self.padding, sticky="w")
+        self.input_file_button_bob = ttk.Button(master, text="Open File", command=self.open_file_bob)
+        # self.upload_button_bob.grid(row=6, column=3, padx=self.padding, pady=self.padding, sticky="w")
 
         self.input_text_bob = tk.Text(master, height=5, width=40)
         self.input_text_bob.grid(row=7, column=2, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
+        
+        # Send Button
+        self.send_button_alice = ttk.Button(master, text="Send", command=partial(self.send_message, sender="Alice"))
+        self.send_button_alice.grid(row=8, column=0, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.chatbox_label_bob = ttk.Label(master, text="Chatbox (Bob Sent and Alice Received Messages):")
-        self.chatbox_label_bob.grid(row=8, column=2, padx=self.padding, pady=self.padding, sticky="w")
+        self.send_button_bob = ttk.Button(master, text="Send", command=partial(self.send_message, sender="Bob"))
+        self.send_button_bob.grid(row=8, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")        
+        
+        # Chatbox
+        self.chatbox_label_alice = ttk.Label(master, text="Chat from Bob:")
+        self.chatbox_label_alice.grid(row=9, column=0, padx=self.padding, pady=self.padding, sticky="w")
 
-        self.chatbox_text_bob = tk.Text(master, height=10, width=60)
-        self.chatbox_text_bob.grid(row=9, column=2, columnspan=3, padx=self.padding, pady=self.padding)
+        self.chatbox_text_alice = tk.Text(master, height=5, width=60)
+        self.chatbox_text_alice.grid(row=10, column=0, columnspan=3, padx=self.padding, pady=self.padding)
 
+        self.chatbox_label_bob = ttk.Label(master, text="Chat from Alice:")
+        self.chatbox_label_bob.grid(row=9, column=2, padx=self.padding, pady=self.padding, sticky="w")
+
+        self.chatbox_text_bob = tk.Text(master, height=5, width=60)
+        self.chatbox_text_bob.grid(row=10, column=2, columnspan=3, padx=self.padding, pady=self.padding)
+
+        # Decrypt Button
+        self.decrypt_button_alice = ttk.Button(master, text="decrypt", command=partial(self.decrypt_message, sender="Alice"))
+        self.decrypt_button_alice.grid(row=11, column=0, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
+
+        self.decrypt_button_bob = ttk.Button(master, text="decrypt", command=partial(self.decrypt_message, sender="Bob"))
+        self.decrypt_button_bob.grid(row=11, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
+        
+        # Decrypted Result
+        self.decrypted_text_alice = tk.Text(master, height=5, width=60)
+        self.decrypted_text_alice.grid(row=12, column=0, columnspan=3, padx=self.padding, pady=self.padding)
+
+        self.decrypted_text_alice = tk.Text(master, height=5, width=60)
+        self.decrypted_text_alice.grid(row=12, column=2, columnspan=3, padx=self.padding, pady=self.padding)        
+
+        # Save Button
+        self.save_button_alice = ttk.Button(master, text="save", command=partial(self.save_output, sender="Alice"))
+        self.save_button_alice.grid(row=13, column=0, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
+
+        self.save_button_bob = ttk.Button(master, text="save", command=partial(self.save_output, sender="Bob"))
+        self.save_button_bob.grid(row=13, column=2, columnspan=2, padx=self.padding, pady=self.padding, sticky="w")
+        
     def generate_key_alice(self):
         p = int(self.input_p_entry_alice.get())
         q = int(self.input_q_entry_alice.get())
@@ -135,6 +169,11 @@ class EncryptionApp:
                 file.write(f"{self.bob_private_key} {self.bob_n}")
             messagebox.showinfo("Success", "Keys generated and saved successfully.")
         pass
+    
+    def decrypt_message(self):
+        
+        pass
+
     def send_public_key_bob(self):
         # Add logic to send public key from Bob
         pass
@@ -142,22 +181,30 @@ class EncryptionApp:
     def toggle_input_alice(self, *args):
         input_type = self.input_type_var_alice.get()
         if input_type == "Text":
-            self.input_text_alice.grid(row=7, column=0, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
-            self.upload_button_alice.grid_remove()
+            self.input_text_alice.grid(row=7, column=0, padx=5, pady=5, columnspan=2)
+            self.input_file_button_alice.grid_remove()
+            # self.file_label.grid_remove()
+            self.input_text_alice.delete("1.0", tk.END)
+            self.file_content_label.grid_remove()
         elif input_type == "File":
             self.input_text_alice.grid_remove()
-            self.upload_button_alice.grid(row=6, column=1, padx=self.padding, pady=self.padding, sticky="w")
+            # self.input_label.grid_remove()
+            self.input_file_button_alice.grid(row=7, column=0, padx=5, pady=5, columnspan=2)
 
     def toggle_input_bob(self, *args):
         input_type = self.input_type_var_bob.get()
         if input_type == "Text":
-            self.input_text_bob.grid(row=7, column=2, padx=self.padding, pady=self.padding, columnspan=2, sticky="w")
-            self.upload_button_bob.grid_remove()
+            self.input_text_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
+            self.input_file_button_bob.grid_remove()
+            # self.file_label.grid_remove()
+            self.input_text_bob.delete("1.0", tk.END)
+            self.file_content_label.grid_remove()
         elif input_type == "File":
             self.input_text_bob.grid_remove()
-            self.upload_button_bob.grid(row=6, column=3, padx=self.padding, pady=self.padding, sticky="w")
+            # self.input_label.grid_remove()
+            self.input_file_button_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
 
-    def upload_file_alice(self):
+    def open_file_alice(self):
         file_path = filedialog.askopenfilename()
         if file_path[-4:] != ".txt":
             self.isBinary = True
@@ -181,7 +228,7 @@ class EncryptionApp:
             # Update file label to display the filename
             self.file_label.config(text="File: " + file_path)
 
-    def upload_file_bob(self):
+    def open_file_bob(self):
         file_path = filedialog.askopenfilename()
         if file_path[-4:] != ".txt":
             self.isBinary = True
@@ -204,6 +251,10 @@ class EncryptionApp:
             
             # Update file label to display the filename
             self.file_label.config(text="File: " + file_path)
+
+    def send_message(self):
+        
+        pass 
     
     def save_file_types(self):
         filetypes = []
