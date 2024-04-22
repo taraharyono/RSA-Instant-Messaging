@@ -271,6 +271,7 @@ class EncryptionApp:
         file_path = filedialog.askopenfilename()
         file_byteintarray = RSA.read_file_bytes(file_path)
         self.content_alice = file_byteintarray
+        messagebox.showinfo("Success", "Upload file " + file_path + " berhasil")
         self.file_label_alice.config(text="File: " + file_path)
         
         # if file_path[-4:] != ".txt":
@@ -299,6 +300,7 @@ class EncryptionApp:
         file_path = filedialog.askopenfilename()
         file_byteintarray = RSA.read_file_bytes(file_path)
         self.content_bob = file_byteintarray
+        messagebox.showinfo("Success", "Upload file " + file_path + " berhasil")
         self.file_label_bob.config(text="File: " + file_path)
 
     def send_message_alice(self):
