@@ -249,69 +249,85 @@ class EncryptionApp:
             self.input_file_button_bob.grid(row=7, column=2, padx=5, pady=5, columnspan=2)
 
     def open_file_alice(self):
+        self.isBinary = True
         file_path = filedialog.askopenfilename()
-        if file_path[-4:] != ".txt":
-            self.isBinary = True
-            self.defaultExtension = file_path[-4:]
-        if file_path and not self.isBinary:
-            with open(file_path, "r") as file:
-                content = file.read()
-                self.input_text.delete("1.0", tk.END)
-                self.input_text.insert("1.0", content)
-                ## print("base64" + base64_content)
-        elif self.isBinary:
-            with open(file_path, "rb") as file:
-                content = file.read()
-                ## base64_content = base64.b64encode(content).decode('utf-8')
-                self.input_text.delete("1.0", tk.END)
-                self.input_text.insert("1.0", content)
+        file_byteintarray = RSA.read_file_bytes(file_path)
+        self.content = file_byteintarray
+        self.file_label.config(text="File: " + file_path)
+        # if file_path[-4:] != ".txt":
+        #     self.isBinary = True
+        #     self.defaultExtension = file_path[-4:]
+        # if file_path and not self.isBinary:
+        #     with open(file_path, "r") as file:
+        #         content = file.read()
+        #         self.input_text.delete("1.0", tk.END)
+        #         self.input_text.insert("1.0", content)
+        # elif self.isBinary:
+            # with open(file_path, "rb") as file:
+            #     content = file.read()
+            #     ## base64_content = base64.b64encode(content).decode('utf-8')
+            #     self.input_text.delete("1.0", tk.END)
+            #     self.input_text.insert("1.0", content)
 
-                self.content = content
+            #     self.content = content
 
             
-            # Update file label to display the filename
-            self.file_label.config(text="File: " + file_path)
+            # # Update file label to display the filename
+            # self.file_label.config(text="File: " + file_path)
 
     def open_file_bob(self):
+        self.isBinary = True
         file_path = filedialog.askopenfilename()
-        if file_path[-4:] != ".txt":
-            self.isBinary = True
-            self.defaultExtension = file_path[-4:]
-        if file_path and not self.isBinary:
-            with open(file_path, "r") as file:
-                content = file.read()
-                self.input_text.delete("1.0", tk.END)
-                self.input_text.insert("1.0", content)
-                ## print("base64" + base64_content)
-        elif self.isBinary:
-            with open(file_path, "rb") as file:
-                content = file.read()
-                ## base64_content = base64.b64encode(content).decode('utf-8')
-                self.input_text.delete("1.0", tk.END)
-                self.input_text.insert("1.0", content)
+        file_byteintarray = RSA.read_file_bytes(file_path)
+        self.content = file_byteintarray
+        self.file_label.config(text="File: " + file_path)
+        # if file_path[-4:] != ".txt":
+        #     self.isBinary = True
+        #     self.defaultExtension = file_path[-4:]
+        # if file_path and not self.isBinary:
+        #     with open(file_path, "r") as file:
+        #         content = file.read()
+        #         self.input_text.delete("1.0", tk.END)
+        #         self.input_text.insert("1.0", content)
+        #         ## print("base64" + base64_content)
+        # elif self.isBinary:
+        #     with open(file_path, "rb") as file:
+        #         content = file.read()
+        #         ## base64_content = base64.b64encode(content).decode('utf-8')
+        #         self.input_text.delete("1.0", tk.END)
+        #         self.input_text.insert("1.0", content)
 
-                self.content = content
+        #         self.content = content
 
             
-            # Update file label to display the filename
-            self.file_label.config(text="File: " + file_path)
+        #     # Update file label to display the filename
+        #     self.file_label.config(text="File: " + file_path)
 
     def send_message_alice(self):
-        input_text_alice = self.input_text_alice.get("1.0", "end-1c")
+        if not self.isBinary:
+            input_text_alice = self.input_text_alice.get("1.0", "end-1c")
+            is_file = False
+        else:
+            is_file = True
         bob_public_key = self.bob_public_key
         bob_n = self.bob_n
         block_size = 1
-        is_file = False
         
         if self.bob_public_key == None:
             messagebox.showerror("Error", "Bob has not sent public key yet!")
             return
 
-        self.encrypted_text_alice = RSA.encrypt(input_text_alice, bob_public_key, bob_n, block_size, is_file)
-        
-        print(self.encrypted_text_alice)
-        self.chatbox_text_bob.delete("1.0", tk.END)
-        self.chatbox_text_bob.insert(tk.END, base64.b64encode(self.encrypted_text_alice.encode()).decode())
+        if not self.isBinary:
+            self.encrypted_text_alice = RSA.encrypt(input_text_alice, bob_public_key, bob_n, block_size, is_file)
+            
+            print(self.encrypted_text_alice)
+            self.chatbox_text_bob.delete("1.0", tk.END)
+            self.chatbox_text_bob.insert(tk.END, base64.b64encode(self.encrypted_text_alice.encode()).decode())
+        else:
+            encrypted_file = RSA.encrypt(self.content, bob_public_key, bob_n, block_size, is_file)
+            encrypted_file_byteintarray = RSA.HexStringToByteIntArray(encrypted_file)
+
+
         # if not self.isBinary:
         #     self.output_text.delete("1.0", tk.END)
         #     self.output_text.insert(tk.END, encrypted_text)
@@ -325,21 +341,28 @@ class EncryptionApp:
         #     self.base64_output_text.delete("1.0", tk.END)
     
     def send_message_bob(self):
-        input_text_bob = self.input_text_bob.get("1.0", "end-1c")
+        if not self.isBinary:
+            input_text_bob = self.input_text_bob.get("1.0", "end-1c")
+            is_file = False
+        else:
+            is_file = True
         alice_public_key = self.alice_public_key
         alice_n = self.alice_n
         block_size = 1
-        is_file = False
         
         if self.alice_public_key == None:
             messagebox.showerror("Error", "Alice has not sent public key yet!")
             return
 
-        self.encrypted_text_bob = RSA.encrypt(input_text_bob, alice_public_key, alice_n, block_size, is_file)
-        
-        print(self.encrypted_text_bob)
-        self.chatbox_text_alice.delete("1.0", tk.END)
-        self.chatbox_text_alice.insert(tk.END, base64.b64encode(self.encrypted_text_bob.encode()).decode())
+        if not self.isBinary:
+            self.encrypted_text_bob = RSA.encrypt(input_text_bob, alice_public_key, alice_n, block_size, is_file)
+            
+            print(self.encrypted_text_bob)
+            self.chatbox_text_alice.delete("1.0", tk.END)
+            self.chatbox_text_alice.insert(tk.END, base64.b64encode(self.encrypted_text_bob.encode()).decode())
+        else:
+            encrypted_file = RSA.encrypt(self.content, alice_public_key, alice_n, block_size, is_file)
+            encrypted_file_byteintarray = RSA.HexStringToByteIntArray(encrypted_file)
         # if not self.isBinary:
         #     self.output_text.delete("1.0", tk.END)
         #     self.output_text.insert(tk.END, encrypted_text)
@@ -353,16 +376,24 @@ class EncryptionApp:
         #     self.base64_output_text.delete("1.0", tk.END)
          
     def decrypt_message_alice(self):
-        decrypted_message = RSA.decrypt(self.encrypted_text_bob, self.alice_private_key, self.alice_n)
-        print(decrypted_message)
-        self.decrypted_chatbox_alice.delete("1.0", tk.END)
-        self.decrypted_chatbox_alice.insert(tk.END, decrypted_message)
+        if not self.isBinary:
+            decrypted_message = RSA.decrypt(self.encrypted_text_bob, self.alice_private_key, self.alice_n)
+            print(decrypted_message)
+            self.decrypted_chatbox_alice.delete("1.0", tk.END)
+            self.decrypted_chatbox_alice.insert(tk.END, decrypted_message)
+        else:
+            decrypted_file_hex = RSA.ByteIntArrayToHexString(self.content)
+            decrypted_file = RSA.decrypt(decrypted_file_hex, self.alice_private_key, self.alice_n)
         
 
     def decrypt_message_bob(self):
-        decrypted_message = RSA.decrypt(self.encrypted_text_alice, self.bob_private_key, self.bob_n)
-        self.decrypted_chatbox_bob.delete("1.0", tk.END)
-        self.decrypted_chatbox_bob.insert(tk.END, decrypted_message)
+        if not self.isBinary:
+            decrypted_message = RSA.decrypt(self.encrypted_text_alice, self.bob_private_key, self.bob_n)
+            self.decrypted_chatbox_bob.delete("1.0", tk.END)
+            self.decrypted_chatbox_bob.insert(tk.END, decrypted_message)
+        else:
+            decrypted_file_hex = RSA.ByteIntArrayToHexString(self.content)
+            decrypted_file = RSA.decrypt(decrypted_file_hex, self.bob_private_key, self.bob_n)
    
     def save_file_types(self):
         filetypes = []
