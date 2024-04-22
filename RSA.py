@@ -49,6 +49,32 @@ def ByteIntArrayToBlocks(byteint_array, size):
 
             blocked_byteintarray.append(int(block))
         return blocked_byteintarray
+    
+
+def HexStringToByteIntArray(hexstring):
+    byteint_array = []
+    
+    i = 0
+    while (i<len(hexstring)):
+        if (i==len(hexstring)-1):
+            byteint_array.append(int(hexstring[i]+"0",16))
+            i = i + 1
+        else:
+            byteint_array.append(int(hexstring[i:i+2],16))
+            i = i + 2
+        
+    return byteint_array
+
+
+def ByteIntArrayToHexString(byteint_array):
+    hexstring = ""
+    for byte in byteint_array:
+        cipher_hex = str(hex(byte))[2:].upper()
+        if (len(cipher_hex)==1):
+            cipher_hex = '0'+cipher_hex
+        hexstring = hexstring + cipher_hex
+
+    return hexstring
 
 
 def CiphertextBlockSize(n):
@@ -132,6 +158,30 @@ def decrypt(ciphertext, d, n):
             num = plaintext_blockstr[i:i+3]
             plaintext_byteintarray.append(int(num))
             i += 3
-    result = bytes(plaintext_byteintarray)
-    return result
+    return plaintext_byteintarray
 
+# Testing
+
+# file_array = read_file_bytes('UMKM.png')
+# print(file_array)
+# print("\noke")
+
+# enc = encrypt(file_array, 79, 3337, 1, True)
+# print(enc)
+# enc_byteintarray = HexStringToByteIntArray(enc)
+
+# output = open('Hasil.png', "wb")
+# for byteint in enc_byteintarray:
+#     output.write(byteint.to_bytes(1, byteorder='little'))
+
+# output.close()
+
+# dec_byteintarray = read_file_bytes('Hasil.png')
+# dec_hex = ByteIntArrayToHexString(dec_byteintarray)
+
+# dec = decrypt(dec_hex, 1019, 3337)
+
+# output_dec = open('Hasil Dec.png', "wb")
+# for byteint in dec:
+#     output_dec.write(byteint.to_bytes(1,byteorder='little'))
+# output_dec.close()
