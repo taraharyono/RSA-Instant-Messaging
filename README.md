@@ -14,3 +14,6 @@ Tugas 3 II44031 Kriptografi dan Koding : Implementasi Algoritma RSA untuk Simula
 ```sh
 py app.py
 ```
+
+## Dokumentasi
+https://docs.google.com/document/d/1eiZJojhSs6_zsyubzELYA2BM0vu3um2NMyIqkWXy0IU/edit
